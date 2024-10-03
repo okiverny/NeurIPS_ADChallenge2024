@@ -10,7 +10,7 @@ class BackgroundSubtractionStrategy(ABC):
 # Concrete strategies
 class ConstantBackgroundSubtraction(BackgroundSubtractionStrategy):
     def subtract_background(self, data, planet_id, time_steps):
-        background = np.mean(data[planet_id, time_steps, :, :], axis=0)
+        background = np.sum(data[planet_id, time_steps, :, :], axis=2) # as an estimator we use the sum along the spatial dimesion
         return data[planet_id] - background
     
 class LinearBackgroundSubtraction(BackgroundSubtractionStrategy):
