@@ -3,11 +3,14 @@ import numpy as np
 
 # Strategy interface
 class BackgroundSubtractionStrategy(ABC):
+    """
+    This is the interface that declares operations common to all background subtraction algorithms/methods.
+    """
     @abstractmethod
     def subtract_background(self, data, planet_id, time_steps):
         pass
 
-# Concrete strategies
+# Concrete Strategies
 class ConstantBackgroundSubtraction(BackgroundSubtractionStrategy):
     def subtract_background(self, data, planet_id, time_steps):
         background = np.sum(data[planet_id, time_steps, :, :], axis=2) # as an estimator we use the sum along the spatial dimesion
