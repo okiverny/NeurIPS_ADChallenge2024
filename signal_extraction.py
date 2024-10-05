@@ -19,9 +19,9 @@ class SignalExtractor:
         """
         self._background_strategy = background_strategy
 
-    def extract_signal(self, data, planet_id, time_steps):
+    def extract_signal(self, data, planet_id):
         """
         The SignalExtractor delegates some work to the BackgroundSubtractionStrategy object.
         """
-        signal, signal_err, background, background_err = self._background_strategy.subtract_background(data, planet_id, time_steps)
-        return signal, signal_err, background, background_err
+        signal, signal_err, background, background_err, quality_metric = self._background_strategy.subtract_background(data, planet_id)
+        return signal, signal_err, background, background_err, quality_metric

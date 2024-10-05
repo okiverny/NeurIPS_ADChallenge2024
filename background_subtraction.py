@@ -5,7 +5,7 @@ import numpy as np
 class BackgroundSubtractionStrategy(ABC):
     """This is the interface that declares operations common to all background subtraction algorithms/methods."""
     @abstractmethod
-    def subtract_background(self, data, planet_id, time_steps):
+    def subtract_background(self, data, planet_id):
         pass
 
     @abstractmethod
@@ -15,8 +15,8 @@ class BackgroundSubtractionStrategy(ABC):
 
 # Concrete Strategies
 class ConstantBackgroundSubtraction(BackgroundSubtractionStrategy):
-    def subtract_background(self, data, planet_id, time_steps):
-        estimator = data[planet_id, time_steps, :, :].sum(axis=2)   # Sum along spatial dimension, it contains signal+background.
+    def subtract_background(self, data, planet_id):
+        estimator = data[planet_id, :, :, :].sum(axis=2)   # Sum along spatial dimension, it contains signal+background.
 
         # Define unobscured and obscured time steps
         time_steps_unobscured_left = np.arange(0, 56)
@@ -35,10 +35,12 @@ class ConstantBackgroundSubtraction(BackgroundSubtractionStrategy):
             signal = signal_plus_background - background
             signal_err = estimator[time_steps_obscured, :].std(axis=0) # assuming a total statistical error
 
-            return signal, signal_err, background, background_err
+            quality_metric = estimator[time_steps_unobscured_left, :].mean(axis=0) / estimator[time_steps_unobscured_right, :].mean(axis=0)
+
+            return signal, signal_err, background, background_err, quality_metric
         else:
-            # Trigger an automatic fallback to a more complex method
-            return None, None, None, None  # Indicating this method failed
+            # Trigger an automatic fallback to a more complex method, if implemented
+            return None, None, None, None, None  # Indicating this method failed
     
     def check_quality(self, estimator, time_steps_unobscured_left, time_steps_unobscured_right):
         """Check if the constant subtraction is valid by comparing mean values."""
@@ -46,29 +48,32 @@ class ConstantBackgroundSubtraction(BackgroundSubtractionStrategy):
         return np.all(quality_metric < 1.1) and np.all(quality_metric > 0.9)
     
 class LinearBackgroundSubtraction(BackgroundSubtractionStrategy):
-    def subtract_background(self, data, planet_id, time_steps):
-        before = np.mean(data[planet_id, time_steps[:len(time_steps)//2], :, :], axis=0)
-        after = np.mean(data[planet_id, time_steps[len(time_steps)//2:], :, :], axis=0)
-        slope = (after - before) / (len(time_steps)//2)
-        background = before + slope * np.arange(len(time_steps)).reshape(-1, 1, 1)
-        return data[planet_id] - background
+    def subtract_background(self, data, planet_id):
+        #before = np.mean(data[planet_id, time_steps[:len(time_steps)//2], :, :], axis=0)
+        #after = np.mean(data[planet_id, time_steps[len(time_steps)//2:], :, :], axis=0)
+        #slope = (after - before) / (len(time_steps)//2)
+        #background = before + slope * np.arange(len(time_steps)).reshape(-1, 1, 1)
+        #return data[planet_id] - background
+
+        return data[planet_id, :, :, :].sum(axis=2)
     
     def check_quality(self, estimator, time_steps_unobscured_left, time_steps_unobscured_right):
         """Linear subtraction does not require a quality check."""
         return True
     
+# The manager not yet used in the implementation!
 class BackgroundSubtractionManager:
     """Manager Class to Control Strategy and Fallback"""
     def __init__(self, initial_strategy):
         self._background_strategy = initial_strategy
     
-    def subtract_background(self, data, planet_id, time_steps):
-        signal, background, background_err, signal_err = self._background_strategy.subtract_background(data, planet_id, time_steps)
+    def subtract_background(self, data, planet_id):
+        signal, background, background_err, signal_err = self._background_strategy.subtract_background(data, planet_id)
         
         # If ConstantBackgroundSubtraction fails, fallback to LinearBackgroundSubtraction
         if signal is None:
             print("Switching to Linear Background Subtraction...")
             self._background_strategy = LinearBackgroundSubtraction()
-            signal, background, background_err, signal_err = self._background_strategy.subtract_background(data, planet_id, time_steps)
+            signal, background, background_err, signal_err = self._background_strategy.subtract_background(data, planet_id)
         
         return signal, background, background_err, signal_err
