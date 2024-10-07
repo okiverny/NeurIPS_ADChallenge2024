@@ -49,16 +49,17 @@ class ConstantBackgroundSubtraction(BackgroundSubtractionStrategy):
     
 class LinearBackgroundSubtraction(BackgroundSubtractionStrategy):
     def subtract_background(self, data, planet_id):
-        #before = np.mean(data[planet_id, time_steps[:len(time_steps)//2], :, :], axis=0)
-        #after = np.mean(data[planet_id, time_steps[len(time_steps)//2:], :, :], axis=0)
-        #slope = (after - before) / (len(time_steps)//2)
-        #background = before + slope * np.arange(len(time_steps)).reshape(-1, 1, 1)
-        #return data[planet_id] - background
+        # Define unobscured and obscured time steps
+        time_steps_unobscured_left = np.arange(0, 56)
+        time_steps_unobscured_right = np.arange(130, 187)
+        time_steps_unobscured = np.concatenate((time_steps_unobscured_left, time_steps_unobscured_right))
+        time_steps_obscured = np.arange(70, 116) # avoiding edge transitions
 
-        return data[planet_id, :, :, :].sum(axis=2)
+        # implement the method here
+        return None
     
     def check_quality(self, estimator, time_steps_unobscured_left, time_steps_unobscured_right):
-        """Linear subtraction does not require a quality check."""
+        """Implement the quality metric as chi2/ndof of the linear fit."""
         return True
     
 # The manager not yet used in the implementation!
