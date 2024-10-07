@@ -4,10 +4,9 @@ import numpy as np
 def smooth_data(data, window_size):
     return savgol_filter(data, window_size, 3)  # window size 51, polynomial order 3
 
-def optimize_breakpoint(data, initial_breakpoint, window_size=20, buffer_size=10, smooth_window=11):
+def optimize_breakpoint(data, initial_breakpoint, window_size=20, buffer_size=8, smooth_window=11):
     best_breakpoint = initial_breakpoint
     best_score = float("-inf")
-    midpoint = len(data) // 2
     smoothed_data = smooth_data(data, smooth_window)
 
     for i in range(-window_size, window_size):
