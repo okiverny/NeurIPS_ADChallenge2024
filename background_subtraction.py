@@ -23,7 +23,7 @@ class ConstantBackgroundSubtraction(BackgroundSubtractionStrategy):
         transit_half_duration = total_time // 23 # time window when the stellar flux is on the half-way darkening
         midpoint = total_time // 2  # planet is at the middle
         ingress_time_step = transit_breakpoint - transit_half_duration
-        egress_time_step = total_time - transit_breakpoint
+        egress_time_step = total_time - transit_breakpoint + transit_half_duration
 
         # Define unobscured and obscured time steps
         time_steps_unobscured_left = np.arange(0, ingress_time_step)

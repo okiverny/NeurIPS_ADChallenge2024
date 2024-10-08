@@ -1,5 +1,19 @@
 from scipy.signal import savgol_filter
+import scipy
 import numpy as np
+
+def erf_func(t, *args):
+    a, c, t0, sigma = args
+    return a * scipy.special.erf((t - t0)/sigma) + c
+
+def linear_func(t, *args):
+    a, c = args
+    return a * t + c
+
+def calc_chisquare(meas, sigma, fit):
+    diff = pow(meas-fit, 2.)
+    test_statistic = (diff / pow(sigma,2.)).sum()
+    return test_statistic
 
 def smooth_data(data, window_size):
     return savgol_filter(data, window_size, 3)  # window size 51, polynomial order 3
