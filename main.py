@@ -17,5 +17,5 @@ if __name__ == "__main__":
     extractor = SignalExtractor(ConstantBackgroundSubtraction())
 
     # Extract signal using the constant strategy
-    signal, signal_err, background, background_err, quality_metric = extractor.extract_signal(data, planet_id)
-    print('Signal Spectrum (Const):', signal)
+    data_normalized, quality_metric = extractor.extract_signal(data, planet_id)
+    print('Signal Spectrum (Const):', data_normalized)

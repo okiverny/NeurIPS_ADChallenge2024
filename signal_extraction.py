@@ -24,9 +24,12 @@ class SignalExtractor:
         """The SignalExtractor delegates some work to the BackgroundSubtractionStrategy object."""
 
         # Find breakpoints for time steps using the optimize_breakpoint() method. We find the breakpoints inclusively in wavelength
-        initial_breakpoint = 60  # tune this value
-        transit_breakpoint = optimize_breakpoint(data[planet_id, :, :, :].sum(axis=(1,2)), initial_breakpoint)
+        initial_breakpoint = (data.shape[1] // 3) - 2  # 60 --> tune this value
+        transit_breakpoint = optimize_breakpoint(data[planet_id, :, :, :].mean(axis=(1,2)), initial_breakpoint)
         print('Optimized breakpoint is:', transit_breakpoint)
 
-        signal, signal_err, background, background_err, quality_metric = self._background_strategy.subtract_background(data, planet_id)
-        return signal, signal_err, background, background_err, quality_metric
+        # Pass this breakpoints (transition time) to the background strategy
+        data_normalized, quality_metric = self._background_strategy.subtract_background(
+            data, planet_id, transit_breakpoint
+        )
+        return data_normalized, quality_metric

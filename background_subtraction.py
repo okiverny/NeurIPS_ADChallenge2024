@@ -15,14 +15,21 @@ class BackgroundSubtractionStrategy(ABC):
 
 # Concrete Strategies
 class ConstantBackgroundSubtraction(BackgroundSubtractionStrategy):
-    def subtract_background(self, data, planet_id):
+    def subtract_background(self, data, planet_id, transit_breakpoint):
         estimator = data[planet_id, :, :, :].sum(axis=2)   # Sum along spatial dimension, it contains signal+background.
 
+        # Setting the time points
+        total_time = data.shape[1]
+        transit_half_duration = total_time // 23 # time window when the stellar flux is on the half-way darkening
+        midpoint = total_time // 2  # planet is at the middle
+        ingress_time_step = transit_breakpoint - transit_half_duration
+        egress_time_step = total_time - transit_breakpoint
+
         # Define unobscured and obscured time steps
-        time_steps_unobscured_left = np.arange(0, 56)
-        time_steps_unobscured_right = np.arange(130, 187)
+        time_steps_unobscured_left = np.arange(0, ingress_time_step)
+        time_steps_unobscured_right = np.arange(egress_time_step, total_time)
         time_steps_unobscured = np.concatenate((time_steps_unobscured_left, time_steps_unobscured_right))
-        time_steps_obscured = np.arange(70, 116) # avoiding edge transitions
+        time_steps_obscured = np.arange(ingress_time_step+2*transit_half_duration, egress_time_step-2*transit_half_duration) # avoiding edge transitions
 
         # Check if the constant background subtraction is valid
         quality_test = self.check_quality(estimator, time_steps_unobscured_left, time_steps_unobscured_right)
@@ -31,13 +38,17 @@ class ConstantBackgroundSubtraction(BackgroundSubtractionStrategy):
             background = estimator[time_steps_unobscured, :].mean(axis=0)
             background_err = estimator[time_steps_unobscured, :].std(axis=0)
 
-            signal_plus_background = estimator[time_steps_obscured, :].mean(axis=0)
-            signal = signal_plus_background - background
-            signal_err = estimator[time_steps_obscured, :].std(axis=0) # assuming a total statistical error
+            # Detrending the data (normalization by stellar flux)
+            data_normalized = estimator/background
 
+            #signal_plus_background = estimator[time_steps_obscured, :].mean(axis=0)
+            #signal = signal_plus_background - background
+            #signal_err = estimator[time_steps_obscured, :].std(axis=0) # assuming a total statistical error
+
+            # Provide quality metric for this method as well
             quality_metric = estimator[time_steps_unobscured_left, :].mean(axis=0) / estimator[time_steps_unobscured_right, :].mean(axis=0)
 
-            return signal, signal_err, background, background_err, quality_metric
+            return data_normalized, quality_metric
         else:
             # Trigger an automatic fallback to a more complex method, if implemented
             return None, None, None, None, None  # Indicating this method failed
@@ -48,12 +59,19 @@ class ConstantBackgroundSubtraction(BackgroundSubtractionStrategy):
         return np.all(quality_metric < 1.1) and np.all(quality_metric > 0.9)
     
 class LinearBackgroundSubtraction(BackgroundSubtractionStrategy):
-    def subtract_background(self, data, planet_id):
+    def subtract_background(self, data, planet_id, transit_breakpoint):
+        estimator = data[planet_id, :, :, :].sum(axis=2)   # Sum along spatial dimension, it contains signal+background.
+
+        # Setting the time points
+        total_time = data.shape[1]
+        transit_half_duration = total_time // 23 # time window when the stellar flux is on the half-way darkening
+        ingress_time_step = transit_breakpoint - transit_half_duration
+        egress_time_step = total_time - transit_breakpoint
+
         # Define unobscured and obscured time steps
-        time_steps_unobscured_left = np.arange(0, 56)
-        time_steps_unobscured_right = np.arange(130, 187)
+        time_steps_unobscured_left = np.arange(0, ingress_time_step)
+        time_steps_unobscured_right = np.arange(egress_time_step, total_time)
         time_steps_unobscured = np.concatenate((time_steps_unobscured_left, time_steps_unobscured_right))
-        time_steps_obscured = np.arange(70, 116) # avoiding edge transitions
 
         # implement the method here
         return None
