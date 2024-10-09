@@ -10,6 +10,10 @@ def linear_func(t, *args):
     a, c = args
     return a * t + c
 
+def quadratic_func(t, *args):
+    a, b, c = args
+    return a*t*t + b*t + c
+
 def calc_chisquare(meas, sigma, fit):
     diff = pow(meas-fit, 2.)
     test_statistic = (diff / pow(sigma,2.)).sum()
