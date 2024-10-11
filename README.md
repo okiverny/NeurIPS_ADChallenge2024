@@ -6,6 +6,7 @@ I used the calibration pipeline implemented in C from [this link](https://www.ka
 Kaggle notebook with calibration step: [Notebook 1: calibration of train data](https://www.kaggle.com/code/olehkivernyk/neurips-starter).
 
 ## 2. Signal Analysis
-Kaggle notebook: [NeurIPS_ModelTraining](https://www.kaggle.com/code/olehkivernyk/neurips-modeltraining/).
+Kaggle notebook: [NeurIPS_ModelTraining](https://www.kaggle.com/code/olehkivernyk/neurips-modeltraining/). This is the first study of data.
+Kaggle notebook: [NeurIPS_TransitModel](https://www.kaggle.com/code/olehkivernyk/neurips-transitmodel/). This is the study of transition parameterization with `Erf` function.
 
 ### 2.1 Background subtraction
