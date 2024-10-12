@@ -45,10 +45,6 @@ class ConstantBackgroundSubtraction(BackgroundSubtractionStrategy):
             # Detrending the data (normalization by stellar flux)
             data_normalized = estimator/background
 
-            #signal_plus_background = estimator[time_steps_obscured, :].mean(axis=0)
-            #signal = signal_plus_background - background
-            #signal_err = estimator[time_steps_obscured, :].std(axis=0) # assuming a total statistical error
-
             # Provide quality metric for this method as well
             quality_metric = estimator[time_steps_unobscured_left, :].mean(axis=0) / estimator[time_steps_unobscured_right, :].mean(axis=0)
 
@@ -67,7 +63,7 @@ class LinearBackgroundSubtraction(BackgroundSubtractionStrategy):
 
         # Setting the time points
         total_time = data.shape[1]
-        transit_half_duration = total_time // 23 # time window when the stellar flux is on the half-way darkening
+        transit_half_duration = total_time // 23 # = 8 ; time window when the stellar flux is on the half-way darkening
         midpoint = total_time // 2  # planet is at the middle
         ingress_time_step = transit_breakpoint - transit_half_duration
         egress_time_step = total_time - transit_breakpoint + transit_half_duration
@@ -122,7 +118,7 @@ class QuadraticBackgroundSubtraction(BackgroundSubtractionStrategy):
 
         # Setting the time points
         total_time = data.shape[1]
-        transit_half_duration = total_time // 23 # time window when the stellar flux is on the half-way darkening
+        transit_half_duration = total_time // 23 #  = 8 ; time window when the stellar flux is on the half-way darkening
         midpoint = total_time // 2  # planet is at the middle
         ingress_time_step = transit_breakpoint - transit_half_duration
         egress_time_step = total_time - transit_breakpoint + transit_half_duration
