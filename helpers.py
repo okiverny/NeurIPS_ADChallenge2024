@@ -6,6 +6,27 @@ def erf_func(t, *args):
     a, c, t0, sigma = args
     return a * scipy.special.erf((t - t0)/sigma) + c
 
+def erf_egress_func(t, *args):
+    a, c, t0_ingress, t0_egress, sigma = args
+    return a * scipy.special.erf((t - t0_egress)/sigma) + c
+
+def erf_ingress_func(t, *args):
+    a, c, t0_ingress, t0_egress, sigma = args
+    return -a * scipy.special.erf((t - t0_ingress)/sigma) + c
+
+def doublesided_erf_function(comboData, *args):
+    a, c, t0_ingress, t0_egress, sigma = args
+
+    # single data reference passed in, extract separate data
+    midpoint = len(comboData)//2
+    data_left = comboData[:midpoint] # first data
+    data_right = comboData[midpoint:] # second data
+
+    result1 = erf_ingress_func(data_left, a, c, t0_ingress, t0_egress, sigma)
+    result2 = erf_egress_func(data_right, a, c, t0_ingress, t0_egress, sigma)
+
+    return np.append(result1, result2)
+
 def linear_func(t, *args):
     a, c = args
     return a * t + c
@@ -58,3 +79,40 @@ def optimize_breakpoint(data, initial_breakpoint, window_size=20, buffer_size=8,
             best_breakpoint = new_breakpoint
 
     return best_breakpoint
+
+# Bootstrap function for better errors assessment
+def bootstrap_signal_extraction(extractor, data, planet_id, n_bootstrap=100):
+    bootstrap_preds = []
+    bootstrap_errors = []
+
+    for _ in range(n_bootstrap):
+        # Resample data with replacement (bootstrap sample)
+        bootstrap_sample = np.random.choice(data.shape[1], size=data.shape[1], replace=True)
+        data_bootstrap = data[:, bootstrap_sample]
+
+        # Extract signal from the bootstrap sample
+        data_normalized, quality_metric, a_vals, c_vals, t0_vals, sigma_vals, a_errs, *rest_errs = extractor.extract_signal(
+            data_bootstrap, planet_id
+        )
+
+        # Compute predictions and errors
+        preds = 2 * np.abs(a_vals)[::-1]
+        preds_err = 3 * np.abs(a_errs)[::-1]
+
+        # Approximate w1 value
+        preds = np.concatenate(([preds[3:8].mean()], preds))
+        preds_err = np.concatenate(([preds_err[3:8].mean()], preds_err))
+
+        # Store results
+        bootstrap_preds.append(preds)
+        bootstrap_errors.append(preds_err)
+
+    # Convert lists to arrays for easier manipulation
+    bootstrap_preds = np.array(bootstrap_preds)
+    bootstrap_errors = np.array(bootstrap_errors)
+
+    # Calculate mean predictions and error estimates (standard deviation or confidence intervals)
+    preds_mean = np.mean(bootstrap_preds, axis=0)
+    preds_err_mean = np.std(bootstrap_errors, axis=0)  # Standard deviation as an estimate of error
+
+    return preds_mean, preds_err_mean
