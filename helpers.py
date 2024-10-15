@@ -35,6 +35,10 @@ def quadratic_func(t, *args):
     a, b, c = args
     return a*t*t + b*t + c
 
+def pol3_func(t, *args):
+    d, a, b, c = args
+    return d*t*t*t + a*t*t + b*t + c
+
 def calc_chisquare(meas, sigma, fit):
     diff = pow(meas-fit, 2.)
     test_statistic = (diff / pow(sigma,2.)).sum()
@@ -79,40 +83,3 @@ def optimize_breakpoint(data, initial_breakpoint, window_size=20, buffer_size=8,
             best_breakpoint = new_breakpoint
 
     return best_breakpoint
-
-# Bootstrap function for better errors assessment
-def bootstrap_signal_extraction(extractor, data, planet_id, n_bootstrap=100):
-    bootstrap_preds = []
-    bootstrap_errors = []
-
-    for _ in range(n_bootstrap):
-        # Resample data with replacement (bootstrap sample)
-        bootstrap_sample = np.random.choice(data.shape[1], size=data.shape[1], replace=True)
-        data_bootstrap = data[:, bootstrap_sample]
-
-        # Extract signal from the bootstrap sample
-        data_normalized, quality_metric, a_vals, c_vals, t0_vals, sigma_vals, a_errs, *rest_errs = extractor.extract_signal(
-            data_bootstrap, planet_id
-        )
-
-        # Compute predictions and errors
-        preds = 2 * np.abs(a_vals)[::-1]
-        preds_err = 3 * np.abs(a_errs)[::-1]
-
-        # Approximate w1 value
-        preds = np.concatenate(([preds[3:8].mean()], preds))
-        preds_err = np.concatenate(([preds_err[3:8].mean()], preds_err))
-
-        # Store results
-        bootstrap_preds.append(preds)
-        bootstrap_errors.append(preds_err)
-
-    # Convert lists to arrays for easier manipulation
-    bootstrap_preds = np.array(bootstrap_preds)
-    bootstrap_errors = np.array(bootstrap_errors)
-
-    # Calculate mean predictions and error estimates (standard deviation or confidence intervals)
-    preds_mean = np.mean(bootstrap_preds, axis=0)
-    preds_err_mean = np.std(bootstrap_errors, axis=0)  # Standard deviation as an estimate of error
-
-    return preds_mean, preds_err_mean
