@@ -6,33 +6,54 @@ def erf_func(t, *args):
     a, c, t0, sigma = args
     return a * scipy.special.erf((t - t0)/sigma) + c
 
-def erf_egress_func(t, *args):
-    a, c, t0_ingress, t0_egress, sigma = args
+# def erf_egress_func(t, *args):
+#     a, c, t0_ingress, t0_egress, sigma = args
+#     return a * scipy.special.erf((t - t0_egress)/sigma) + c
+
+# def erf_ingress_func(t, *args):
+#     a, c, t0_ingress, t0_egress, sigma = args
+#     return -a * scipy.special.erf((t - t0_ingress)/sigma) + c
+
+# def doublesided_erf_function(comboData, *args):
+#     a, c, t0_ingress, t0_egress, sigma = args
+
+#     # single data reference passed in, extract separate data
+#     midpoint = len(comboData)//2
+#     data_left = comboData[:midpoint] # first data
+#     data_right = comboData[midpoint:] # second data
+
+#     result1 = erf_ingress_func(data_left, a, c, t0_ingress, t0_egress, sigma)
+#     result2 = erf_egress_func(data_right, a, c, t0_ingress, t0_egress, sigma)
+
+#     return np.append(result1, result2)
+
+def erf_egress_func(t, a, c, t0_ingress, t0_egress, sigma):
     return a * scipy.special.erf((t - t0_egress)/sigma) + c
 
-def erf_ingress_func(t, *args):
-    a, c, t0_ingress, t0_egress, sigma = args
+def erf_ingress_func(t, a, c, t0_ingress, t0_egress, sigma):
     return -a * scipy.special.erf((t - t0_ingress)/sigma) + c
 
-def doublesided_erf_function(comboData, *args):
-    a, c, t0_ingress, t0_egress, sigma = args
-
+def doublesided_erf_function(comboData, a, c, t0_ingress, t0_egress, sigma):
     # single data reference passed in, extract separate data
     midpoint = len(comboData)//2
     data_left = comboData[:midpoint] # first data
     data_right = comboData[midpoint:] # second data
-
     result1 = erf_ingress_func(data_left, a, c, t0_ingress, t0_egress, sigma)
     result2 = erf_egress_func(data_right, a, c, t0_ingress, t0_egress, sigma)
-
     return np.append(result1, result2)
 
+# Define your custom fit function: a parabola with parameters a, b, and c
+# b is the fitted value and c the error
+def chi2_interpol_func(x, a, b, c):
+    return a + (x - b) * (x - b) / c**2
+
+# Background subtraction functions
 def linear_func(t, *args):
     a, c = args
     return a * t + c
 
-def quadratic_func(t, *args):
-    a, b, c = args
+def quadratic_func(t, a, b, c):
+    #a, b, c = args
     return a*t*t + b*t + c
 
 def pol3_func(t, *args):
