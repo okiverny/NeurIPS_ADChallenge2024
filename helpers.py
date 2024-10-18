@@ -2,6 +2,24 @@ from scipy.signal import savgol_filter
 import scipy
 import numpy as np
 
+# Function to calculate uncertainty
+def find_uncertainty(func, best_value, chi2_min, step=0.000001, ndf=1):
+    chi2_target = chi2_min + 1/ndf  # Target chi2 value
+
+    # Initialize values slightly above and below the minimum MW value
+    mu_high = best_value + step
+    mu_low = best_value - step
+
+    # Increase the range until the target chi2 value is reached
+    while func(mu_high) <= chi2_target:
+        mu_high += step
+    while func(mu_low) <= chi2_target:
+        mu_low -= step
+
+    # Calculate uncertainty as half the difference between the MW values
+    uncertainty = (mu_high - mu_low) / 2
+    return uncertainty
+
 def erf_func(t, *args):
     a, c, t0, sigma = args
     return a * scipy.special.erf((t - t0)/sigma) + c
