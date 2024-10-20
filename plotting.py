@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from helpers import quadratic_func
+from helpers import quadratic_func, chi2_interpol_func
 
 def plot_chi2_scan(mu_values, chi2_values, params, ndf, planet_id, lambdas):
     fig, ax = plt.subplots(figsize=(16, 5))
