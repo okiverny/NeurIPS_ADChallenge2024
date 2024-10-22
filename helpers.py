@@ -1,4 +1,6 @@
 from scipy.signal import savgol_filter
+from scipy.stats import chisquare
+from scipy.stats import chi2
 import scipy
 import numpy as np
 
@@ -23,27 +25,6 @@ def find_uncertainty(func, best_value, chi2_min, step=0.000001, ndf=1):
 def erf_func(t, *args):
     a, c, t0, sigma = args
     return a * scipy.special.erf((t - t0)/sigma) + c
-
-# def erf_egress_func(t, *args):
-#     a, c, t0_ingress, t0_egress, sigma = args
-#     return a * scipy.special.erf((t - t0_egress)/sigma) + c
-
-# def erf_ingress_func(t, *args):
-#     a, c, t0_ingress, t0_egress, sigma = args
-#     return -a * scipy.special.erf((t - t0_ingress)/sigma) + c
-
-# def doublesided_erf_function(comboData, *args):
-#     a, c, t0_ingress, t0_egress, sigma = args
-
-#     # single data reference passed in, extract separate data
-#     midpoint = len(comboData)//2
-#     data_left = comboData[:midpoint] # first data
-#     data_right = comboData[midpoint:] # second data
-
-#     result1 = erf_ingress_func(data_left, a, c, t0_ingress, t0_egress, sigma)
-#     result2 = erf_egress_func(data_right, a, c, t0_ingress, t0_egress, sigma)
-
-#     return np.append(result1, result2)
 
 def erf_egress_func(t, a, c, t0_ingress, t0_egress, sigma):
     return a * scipy.special.erf((t - t0_egress)/sigma) + c
@@ -122,3 +103,36 @@ def optimize_breakpoint(data, initial_breakpoint, window_size=20, buffer_size=8,
             best_breakpoint = new_breakpoint
 
     return best_breakpoint
+
+
+def evaluate_flatness(preds, preds_err, preds_incl, preds_err_incl):
+    """
+    Evaluate whether the predictions show a significant dependence on wavelength 
+    or if they are consistent with a flat spectrum.
+    
+    Parameters:
+    preds: numpy array of predicted values (size 282)
+    preds_err: numpy array of predicted errors (size 282)
+    preds_incl: numpy array of flat predicted values (size 282, wavelength-inclusive)
+    preds_err_incl: numpy array of flat predicted errors (size 282, wavelength-inclusive)
+    
+    Returns:
+    chi2: Chi-square statistic for testing flatness
+    p_value: p-value indicating whether to reject the null hypothesis of flatness
+    """
+
+    # Chi-square test: (obs - exp)^2 / err^2
+    # We combine errors from the predictions and the flat prediction in quadrature
+    combined_err = np.sqrt(preds_err**2 + preds_err_incl**2)
+
+    # Compute chi-squared statistic comparing preds (observed) to preds_incl (expected flat model)
+    chi2_stat = np.sum((preds - preds_incl)**2 / combined_err**2)
+
+    # Degrees of freedom: number of data points minus 1 (since flat model has one parameter)
+    dof = len(preds) - 1
+
+    # Compute the p-value from the chi-square statistic and degrees of freedom
+    #p_value = chisquare(preds, preds_incl, ddof=dof)[1]
+    p_value = chi2.sf(chi2_stat, dof)  # Use survival function to get the p-value
+
+    return chi2_stat/dof, p_value
