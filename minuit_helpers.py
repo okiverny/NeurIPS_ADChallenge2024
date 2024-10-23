@@ -1,10 +1,10 @@
 import numpy as np
 from iminuit import Minuit
-from iminuit.cost import BinnedNLL
 
 def polynomial(x, c0, c1, c2, c3):
     pol = np.sum(p * (x)**(i) for i, p in enumerate([c0, c1, c2, c3]))
     return pol
+
 def step_function(x, center, width, tan):
         a1 = -center + width
         a2 = center + width
@@ -15,8 +15,8 @@ def eclipse(x, c0, c1, c2, c3, center, width, tan, frac):
     step = step_function(x, center, width, tan)
     return pol-frac*step
 
-def fit_time(y_data, new_params:dict=None, fix_params:dict=None, limit_params:dict=None, log=False):
-    x_data = np.linspace(0,1, 187)
+def fit_transit(y_data, new_params:dict=None, fix_params:dict=None, limit_params:dict=None, log=False):
+    x_data = np.linspace(0, 1, 187)
     y_errors = np.sqrt(y_data)  
     y_errors = y_errors/y_data.sum() 
     y_data = y_data/y_data.sum()
@@ -35,9 +35,15 @@ def fit_time(y_data, new_params:dict=None, fix_params:dict=None, limit_params:di
     m.limits['frac'] = (1e-6, 1e-2)
     m.limits['tan'] = (50, 2000)
     m.limits['center'] = (0.4, 0.6)
-    m.limits['width'] = (0.1, 0.3)
+    m.limits['width'] = (0.05, 0.45)
     m.migrad()
     m.hesse()
     if log:
         print(m)
-    return m.values, m.errors
+
+    result = {
+        'values': m.values,
+        'errors': m.errors,
+    }
+
+    return result
