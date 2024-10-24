@@ -16,46 +16,6 @@ class BackgroundSubtractionStrategy(ABC):
         """Check the quality of the background subtraction method."""
         pass
 
-# Concrete Strategies
-class ConstantBackgroundSubtraction(BackgroundSubtractionStrategy):
-    def subtract_background(self, data, planet_id, transit_breakpoint):
-        estimator = data[planet_id, :, :, :].sum(axis=2)   # Sum along spatial dimension, it contains signal+background.
-
-        # Setting the time points
-        total_time = data.shape[1]
-        transit_half_duration = total_time // 23 # time window when the stellar flux is on the half-way darkening
-        midpoint = total_time // 2  # planet is at the middle
-        ingress_time_step = transit_breakpoint - transit_half_duration
-        egress_time_step = total_time - transit_breakpoint + transit_half_duration
-
-        # Define unobscured and obscured time steps
-        time_steps_unobscured_left = np.arange(0, ingress_time_step)
-        time_steps_unobscured_right = np.arange(egress_time_step, total_time)
-        time_steps_unobscured = np.concatenate((time_steps_unobscured_left, time_steps_unobscured_right))
-        time_steps_obscured = np.arange(ingress_time_step+2*transit_half_duration, egress_time_step-2*transit_half_duration) # avoiding edge transitions
-
-        # Check if the constant background subtraction is valid
-        quality_metric = estimator[time_steps_unobscured_left, :].mean(axis=0) / estimator[time_steps_unobscured_right, :].mean(axis=0)
-        quality_test = self.check_quality(quality_metric)
-
-        if quality_test:
-            background = estimator[time_steps_unobscured, :].mean(axis=0)
-            background_err = estimator[time_steps_unobscured, :].std(axis=0)
-
-            # Detrending the data (normalization by stellar flux)
-            data_normalized = estimator/background
-
-            # Provide quality metric for this method as well
-            quality_metric = estimator[time_steps_unobscured_left, :].mean(axis=0) / estimator[time_steps_unobscured_right, :].mean(axis=0)
-
-            return data_normalized, quality_metric
-        else:
-            # Trigger an automatic fallback to a more complex method, if implemented
-            return None, None  # Indicating this method failed
-    
-    def check_quality(self, quality_metric):
-        """Check if the constant subtraction is valid by comparing mean values."""
-        return np.all(quality_metric < 1.1) and np.all(quality_metric > 0.9)
     
 class LinearBackgroundSubtraction(BackgroundSubtractionStrategy):
     def subtract_background(self, data, planet_id, transit_breakpoint):
@@ -84,6 +44,7 @@ class LinearBackgroundSubtraction(BackgroundSubtractionStrategy):
         par0, par1, quality_metric = [], [], []
         par0_err, par1_err = [], []
         data_normalized = []
+        Bkg_Sum = 0  # To compute total sum in the BKG-only hypothesis
 
         # Loop over wavelengths
         for lambda_i in range(y.shape[1]):
@@ -101,6 +62,9 @@ class LinearBackgroundSubtraction(BackgroundSubtractionStrategy):
             NDF = len(y) - len(popt)
             quality_metric.append(chi2/NDF)
 
+            # Compute BKG-only hypothesis for dark current
+            Bkg_Sum += linear_func(time_steps, *popt).sum()
+
             # Detrending the data (normalization by stellar flux)
             data_normalized.append( estimator[:,lambda_i] / linear_func(time_steps, *popt) )
 
@@ -114,7 +78,7 @@ class LinearBackgroundSubtraction(BackgroundSubtractionStrategy):
 
 class QuadraticBackgroundSubtraction(BackgroundSubtractionStrategy):
     def subtract_background(self, data, planet_id, transit_breakpoint):
-        estimator = data[planet_id, :, :, :].sum(axis=2)   # Sum along spatial dimension, it contains signal+background.
+        estimator = data[planet_id, :, :, 10:22].sum(axis=2)   # Sum along spatial dimension, it contains signal+background.
 
         # Setting the time points
         total_time = data.shape[1]
@@ -140,6 +104,7 @@ class QuadraticBackgroundSubtraction(BackgroundSubtractionStrategy):
         par0_err, par1_err = [], []
         quality_metric = []
         data_normalized = []
+        Bkg_Sum = 0  # To compute total sum in the BKG-only hypothesis
 
         # Loop over wavelengths
         for lambda_i in range(y.shape[1]):
@@ -157,11 +122,13 @@ class QuadraticBackgroundSubtraction(BackgroundSubtractionStrategy):
             NDF = len(y) - len(popt)
             quality_metric.append(chi2/NDF)
 
+            # Compute BKG-only hypothesis for dark current
+            Bkg_Sum += quadratic_func(time_steps, *popt).sum()
+
             # Detrending the data (normalization by stellar flux)
             data_normalized.append( estimator[:,lambda_i] / quadratic_func(time_steps, *popt) )
 
-        # implement the method here
-        return np.array(data_normalized).T, np.array(quality_metric)
+        return np.array(data_normalized).T, np.array(quality_metric), Bkg_Sum
     
     def check_quality(self, quality_metric):
         """Quality metric as chi2/ndof of the linear fit."""
@@ -169,7 +136,7 @@ class QuadraticBackgroundSubtraction(BackgroundSubtractionStrategy):
     
 class CubicBackgroundSubtraction(BackgroundSubtractionStrategy):
     def subtract_background(self, data, planet_id, transit_breakpoint, lambda_step=1):
-        estimator = data[planet_id, :, :, :].sum(axis=2)   # Sum along spatial dimension, it contains signal+background.
+        estimator = data[planet_id, :, :, 10:22].sum(axis=2)   # Sum along spatial dimension, it contains signal+background.
 
         # Setting the time points
         total_time = data.shape[1]
@@ -195,6 +162,7 @@ class CubicBackgroundSubtraction(BackgroundSubtractionStrategy):
         par0_err, par1_err = [], []
         quality_metric = []
         data_normalized = []
+        Bkg_Sum = 0  # To compute total sum in the BKG-only hypothesis
 
         # Loop over wavelengths
         for lambda_i in range(y.shape[1]):
@@ -212,11 +180,14 @@ class CubicBackgroundSubtraction(BackgroundSubtractionStrategy):
             NDF = len(y) - len(popt)
             quality_metric.append(chi2/NDF)
 
+            # Compute BKG-only hypothesis for dark current
+            Bkg_Sum += pol3_func(time_steps, *popt).sum()
+
             # Detrending the data (normalization by stellar flux)
             data_normalized.append( estimator[:,lambda_i] / pol3_func(time_steps, *popt) )
 
-        # implement the method here
-        return np.array(data_normalized).T, np.array(quality_metric)
+        # return calculations
+        return np.array(data_normalized).T, np.array(quality_metric), Bkg_Sum
 
     def check_quality(self, quality_metric):
         """Quality metric as chi2/ndof of the linear fit."""
