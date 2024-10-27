@@ -22,6 +22,8 @@ def find_uncertainty(func, best_value, chi2_min, step=0.000001, ndf=1):
     uncertainty = (mu_high - mu_low) / 2
     return uncertainty
 
+#######################################
+# Variants of Erf functions
 def erf_func(t, *args):
     a, c, t0, sigma = args
     return a * scipy.special.erf((t - t0)/sigma) + c
@@ -41,11 +43,29 @@ def doublesided_erf_function(comboData, a, c, t0_ingress, t0_egress, sigma):
     result2 = erf_egress_func(data_right, a, c, t0_ingress, t0_egress, sigma)
     return np.append(result1, result2)
 
+# Reduced version
+def erf_egress_func_reduced(t, a, t0_ingress, t0_egress, sigma):
+    return a * scipy.special.erf((t - t0_egress)/sigma) + 1 - a
+
+def erf_ingress_func_reduced(t, a, t0_ingress, t0_egress, sigma):
+    return -a * scipy.special.erf((t - t0_ingress)/sigma) + 1 - a
+
+def doublesided_erf_function_reduced(comboData, a, t0_ingress, t0_egress, sigma):
+    # single data reference passed in, extract separate data
+    midpoint = len(comboData)//2
+    data_left = comboData[:midpoint] # first data
+    data_right = comboData[midpoint:] # second data
+    result1 = erf_ingress_func_reduced(data_left, a, t0_ingress, t0_egress, sigma)
+    result2 = erf_egress_func_reduced(data_right, a, t0_ingress, t0_egress, sigma)
+    return np.append(result1, result2)
+#######################################
+
 # Define your custom fit function: a parabola with parameters a, b, and c
 # b is the fitted value and c the error
 def chi2_interpol_func(x, a, b, c):
     return a + (x - b) * (x - b) / c**2
 
+#######################################
 # Background subtraction functions
 def linear_func(t, *args):
     a, c = args
@@ -59,6 +79,7 @@ def pol3_func(t, *args):
     d, a, b, c = args
     return d*t*t*t + a*t*t + b*t + c
 
+#######################################
 def calc_chisquare(meas, sigma, fit):
     diff = pow(meas-fit, 2.)
     test_statistic = (diff / pow(sigma,2.)).sum()
@@ -103,7 +124,6 @@ def optimize_breakpoint(data, initial_breakpoint, window_size=20, buffer_size=8,
             best_breakpoint = new_breakpoint
 
     return best_breakpoint
-
 
 def evaluate_flatness(preds, preds_err, preds_incl, preds_err_incl):
     """
