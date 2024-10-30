@@ -1,5 +1,10 @@
 import numpy as np
 from iminuit import Minuit
+from numba_stats import norm
+
+# Various functions
+# def model_pdf(x, alpha, sigma, mu):
+#     return alpha * norm.pdf(x, 0, sigma) + (1 - alpha) * norm.pdf(x, mu, sigma)
 
 def polynomial(x, c0, c1, c2, c3):
     pol = np.sum(p * (x)**(i) for i, p in enumerate([c0, c1, c2, c3]))
