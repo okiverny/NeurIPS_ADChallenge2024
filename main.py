@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 from signal_extraction import SignalExtractor
-from background_subtraction import ConstantBackgroundSubtraction, LinearBackgroundSubtraction, QuadraticBackgroundSubtraction, BackgroundSubtractionManager
-from signal_extraction_strategy import ErfParametrization
+from background_subtraction import ConstantBackgroundSubtraction, LinearBackgroundSubtraction, QuadraticBackgroundSubtraction, CubicBackgroundSubtraction, BackgroundSubtractionManager
+from signal_extraction_strategy import ErfParametrization, DoubleSidedErfParametrization, ZFitParametrization
 
 if __name__ == "__main__":
     # Loading data
