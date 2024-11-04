@@ -14,3 +14,5 @@ The method consists of two main steps: data detrending and transit model fitting
 
 ### 2.1 Data detrending
 In this step, we identify transit breakpoints, mask the transit phase, and fit a quadratic polynomial to the remaining data. This parametrization provides a model that describes the star’s flux in absence of a planetary transit. The detrended data from this model is used in the next step (see figure).
+
+![Analysis Overview](figures/ArielExample.png)
