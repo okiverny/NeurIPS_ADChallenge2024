@@ -1,12 +1,11 @@
 from signal_extraction_strategy import SignalExtractStrategy
 import numpy as np
-import warnings
 import scipy
 from iminuit import Minuit, cost
-from iminuit.util import make_func_code, make_with_signature, describe
+from iminuit.util import make_with_signature
 from numba import vectorize, float64
 from numba_stats import norm
-#from minuit_helpers import model_pdf
+from minuit_helpers import model_pdf
 
 #@vectorize([float64(float64, float64, float64, float64)], fastmath=True)
 def profile_model_pdf(x, alpha, sigma, mu, muB):
@@ -153,7 +152,7 @@ class ProfileMethod(SignalExtractStrategy):
         # Return the parameter arrays (fit values and their uncertainties)
         return np.array(mu), np.array(mu_err), np.array(sigma), np.array(sigma_err), results, None, None, None, None, None
     
-
+# Experimental function for simultanious fit with share parameters using Minuit.
 def fit_data(data_normalized, t_min, t_max, lambda_step=1, transit_breakpoints=None):
     # Define some parameters
     y_bias = 0.01
@@ -203,7 +202,7 @@ def fit_data(data_normalized, t_min, t_max, lambda_step=1, transit_breakpoints=N
     
         # Sum all the likelihoods to create the combined likelihood function
         combined_likelihood = sum(likelihoods)
-        combined_likelihood=likelihoods[0]
+        #combined_likelihood=likelihoods[0]
 
         # Initialize Minuit with the combined likelihood and initial parameter values
         m = Minuit(combined_likelihood, **initial_params)
@@ -252,7 +251,7 @@ def fit_data(data_normalized, t_min, t_max, lambda_step=1, transit_breakpoints=N
     
         # Sum all the likelihoods to create the combined likelihood function
         combined_likelihood = sum(likelihoods)
-        combined_likelihood=likelihoods[0]
+        #combined_likelihood=likelihoods[0]
 
         # Initialize Minuit with the combined likelihood and initial parameter values
         m = Minuit(combined_likelihood, **initial_params)
