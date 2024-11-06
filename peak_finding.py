@@ -1,4 +1,4 @@
-from scipy.signal import find_peaks
+import scipy
 import numpy as np
 
 def extract_peak(targets, ipeak_low, ipeak_high, prominence=0.00005, width=25, rel_height=0.75):
@@ -26,7 +26,7 @@ def extract_peak(targets, ipeak_low, ipeak_high, prominence=0.00005, width=25, r
         peak_region = target[ipeak_low:ipeak_high]
         
         # Find peaks with the specified prominence and width parameters
-        peaks, properties = find_peaks(peak_region, prominence=prominence, width=width, rel_height=rel_height)
+        peaks, properties = scipy.signal.find_peaks(peak_region, prominence=prominence, width=width, rel_height=rel_height)
         #print('Found peaks:', len(peaks), peaks)
         
         # Check if any peaks were found in the region
