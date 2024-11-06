@@ -258,10 +258,6 @@ class SignalExtractor:
             # from DoubleSidedErfParametrization approach
             results_incl = {'mu': 2*results_erf_incl[0][0], 'mu_err': results_erf_incl[5][0], 'sigma': 0.0005, 'sigma_err': 0.0001, 'alpha': 0.66, 'alpha_err': 0.01 }
 
-            #_, _, _, _, results_incl, *_ = self._signal_strategy.parametrize_data(
-            #    data_normalized, 0, data.shape[1], lambda_step=data_normalized.shape[1]
-            #)
-
             # Results from the fitting of the full time range
             mu, mu_err, sigma, sigma_err, *_ = self._signal_strategy.parametrize_data(
                 data_normalized, 0, data.shape[1], lambda_step=lambda_step, transit_breakpoints=transit_breakpoints, results_incl=results_incl
